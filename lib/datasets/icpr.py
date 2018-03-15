@@ -27,14 +27,16 @@ try:
 except NameError:
     xrange = range  # Python 3
 
+
+DATA_DIR = "C:/myFile/faster-rcnn.pytorch/data"
 class ICPR(imdb):
   """docstring for ICPR"""
   def __init__(self, image_set):
-    imdb.__init__(self, 'icpr_'+ image_set)
+    imdb.__init__(self, image_set)
     self._image_set = image_set
-    self._data_path = osp.join(cfg.DATA_DIR, 'txt')
-    self._image_path = osp.join(cfg.DATA_DIR, 'image')
-
+    self._data_path = osp.join(cfg.DATA_DIR, image_set, 'icpr_9000', 'txt_9000')
+    self._image_path = osp.join(cfg.DATA_DIR, image_set, 'icpr_9000', 'image_9000')
+    self._file_list = self._load_file_names()
     ####  No need care about classes for text detection  
     
     self._classes = ['text']
@@ -52,7 +54,10 @@ class ICPR(imdb):
     """
     Construct an image path from the image's "index" identifier.
     """
-    pass
+    assert self._file_list != None
+    image_path = osp.join(self._image_path, self._file_list[index])
+    return image_path
+
   def _load_image_set_index(self):
     """
     Load the indexes listed in this dataset's image set file.
@@ -64,7 +69,11 @@ class ICPR(imdb):
     """
     Get all the file names for indexing
     """
-    pass
+    directory = self._data_path
+    self.file_list = os.listdir(dir_name)
+    self.file_list = [item[:-4] for item in file_list]
+    return file_list
+
   def gt_roidb(self):
     """
     Return the database of ground-truth regions of interest.
