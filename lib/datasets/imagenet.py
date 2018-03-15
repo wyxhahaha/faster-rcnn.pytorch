@@ -82,8 +82,10 @@ class imagenet(imdb):
         """
         Construct an image path from the image's "index" identifier.
         """
-        image_path = os.path.join(self._data_path, 'Data', self._image_set, index + self._image_ext[0])
-        assert os.path.exists(image_path), 'path does not exist: {}'.format(image_path)
+        image_path = os.path.join(self._data_path, 'Data', \
+            self._image_set, index + self._image_ext[0])
+        assert os.path.exists(image_path), \
+            'path does not exist: {}'.format(image_path)
         return image_path
 
     def _load_image_set_index(self):

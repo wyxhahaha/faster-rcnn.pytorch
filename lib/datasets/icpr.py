@@ -2,7 +2,7 @@
 # Fast R-CNN
 # 
 # Licensed under The MIT License [see LICENSE for details]
-# Written by Howie Chen
+# Written by Howie Chen & 2018.3
 # --------------------------------------------------------
 
 from __future__ import absolute_import
@@ -22,9 +22,69 @@ import pickle
 import json
 import uuid
 
-class ICPR(object):
+try:
+    xrange          # Python 2
+except NameError:
+    xrange = range  # Python 3
+
+class ICPR(imdb):
   """docstring for ICPR"""
   def __init__(self, image_set):
-    super(ICPR, self).__init__()
-    self.arg = arg
+    imdb.__init__(self, 'icpr_'+ image_set)
+    self._image_set = image_set
+    self._data_path = osp.join(cfg.DATA_DIR, 'txt')
+    self._image_path = osp.join(cfg.DATA_DIR, 'image')
+
+    ####  No need care about classes for text detection  
     
+    self._classes = ['text']
+
+
+  def image_path_at(self, i):
+    raise NotImplementedError
+
+  def image_id_at(self, i):
+    raise NotImplementedError
+
+  def default_roidb(self):
+    raise NotImplementedError
+  def image_path_from_index(self, index):
+    """
+    Construct an image path from the image's "index" identifier.
+    """
+    pass
+  def _load_image_set_index(self):
+    """
+    Load the indexes listed in this dataset's image set file.
+    """
+    # Example path to image set file:
+    # self._data_path + /ImageSets/val.txt 
+    pass
+  def _load_file_names(self):
+    """
+    Get all the file names for indexing
+    """
+    pass
+  def gt_roidb(self):
+    """
+    Return the database of ground-truth regions of interest.
+    This function loads/saves from/to a cache file to speed up future calls.
+    """
+    pass
+  def _load_icpr_annotation(self, index):
+    """
+    Load image and bounding boxes info from txt files of imagenet.
+    """
+    pass
+  def evaluate_detections(self, all_boxes, output_dir=None):
+    """
+    all_boxes is a list of length number-of-classes.
+    Each list element is a list of length number-of-images.
+    Each of those list elements is either an empty list []
+    or a numpy array of detection.
+
+    all_boxes[class][image] = [] or np.array of shape #dets x 5
+    """
+    raise NotImplementedError
+
+                       
