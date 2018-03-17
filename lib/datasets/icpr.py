@@ -9,7 +9,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from datasets.imdb import imdb
+from .datasets.imdb import imdb
 import datasets.ds_utils as ds_utils
 from model.utils.config import cfg
 import os.path as osp
@@ -28,72 +28,98 @@ except NameError:
     xrange = range  # Python 3
 
 
-DATA_DIR = "C:/myFile/faster-rcnn.pytorch/data"
-class ICPR(imdb):
-  """docstring for ICPR"""
-  def __init__(self, image_set):
-    imdb.__init__(self, image_set)
-    self._image_set = image_set
-    self._data_path = osp.join(cfg.DATA_DIR, image_set, 'icpr_9000', 'txt_9000')
-    self._image_path = osp.join(cfg.DATA_DIR, image_set, 'icpr_9000', 'image_9000')
-    self._file_list = self._load_file_names()
-    ####  No need care about classes for text detection  
+class icpr(imdb):
+  """this is for the icpr detection commpetion"""
+  def __init__(self, image_set, data_path=None):
+    imdb.__init__(image_set)
+    self._data_path = self._get_default_path() if data_path is None \
+                      else data_path
+    self._classes = ('__background__', 'text')
+    self.__class_to_bind = dict(zip(self.classes, xrange(self.num_classes)))
+    self._image_ext = '.jpg'
+    self._image_index = self._load_image_set_index()
     
-    self._classes = ['text']
+    self._roidb_handler = self.ge_roidb
+    self._salt = None
+    self._comp_id = ''
 
 
+    #check if path exist
+
+
+  def _get_default_path(self):
+    """
+    Return the default path where icpr is expected to be installed.
+    """
+    return os.path.join(cfg.DATA_DIR, 'icpr')
   def image_path_at(self, i):
-    raise NotImplementedError
-
-  def image_id_at(self, i):
-    raise NotImplementedError
-
-  def default_roidb(self):
-    raise NotImplementedError
+    """
+    Return the absolute path to i_th image 
+    """
+    return self.image_path_from_index(self._image_index[i])
+  
   def image_path_from_index(self, index):
-    """
-    Construct an image path from the image's "index" identifier.
-    """
-    assert self._file_list != None
-    image_path = osp.join(self._image_path, self._file_list[index])
+    
+    image_dir_path = os.path.join(self._data_path, 'Images')
+    image_path = osp.join(image_dir_path, index+self._image_ext)
+    
+    assert os.path.exists(image_path), \
+      'Path does not exist: {}'.format(image_path)
     return image_path
 
   def _load_image_set_index(self):
-    """
-    Load the indexes listed in this dataset's image set file.
-    """
-    # Example path to image set file:
-    # self._data_path + /ImageSets/val.txt 
-    pass
-  def _load_file_names(self):
-    """
-    Get all the file names for indexing
-    """
-    directory = self._data_path
-    self.file_list = os.listdir(dir_name)
-    self.file_list = [item[:-4] for item in file_list]
-    return file_list
+
+    # example image set file:
+    # self._data_path + ImageSets/train.txt
+    image_set_file = osp.join(self._data_path, 'ImageSets', 'train.txt')
+    
+    assert os.path.exists(image_set_file), \
+            'Path does not exists: {}'.format(image_set_file)
+    with open(image_set_file) as f:
+      image_index = [x.strip() for x in f.readlines()]
+    return image_index
 
   def gt_roidb(self):
     """
     Return the database of ground-truth regions of interest.
+
     This function loads/saves from/to a cache file to speed up future calls.
     """
-    pass
+    cache_file = os.path.join(self.cache_path, self.name + '_gt_roidb.pkl')
+    if os.path.exists(cache_file):
+      with open(cache_file, 'rb') as fid:
+        roidb = pickle.load(fid)
+      print('{} gt roidb loaded from {}'.format(self.name, cache_file))
+      return roidb
+
+    gt_roidb = [self._load_icpr_annotation(index)[0]
+          for index in self.image_index]
+    with open(cache_file, 'wb') as fid:
+      pickle.dump(gt_roidb, fid, pickle.HIGHEST_PROTOCOL)
+    print('wrote gt roidb to {}'.format(cache_file))
+
+    return gt_roidb
+
   def _load_icpr_annotation(self, index):
-    """
-    Load image and bounding boxes info from txt files of imagenet.
-    """
-    pass
-  def evaluate_detections(self, all_boxes, output_dir=None):
-    """
-    all_boxes is a list of length number-of-classes.
-    Each list element is a list of length number-of-images.
-    Each of those list elements is either an empty list []
-    or a numpy array of detection.
+    annotation_dir = os.path.join(self._data_path, 'Annotations')
+    annotation_file = os.path.join(annotation_dir, index+'.txt')
+    annotations = []
+    letters = []
+    with open(annotation_file,encoding="utf8") as f:
+        for line in f:
+            data = line.split(',')
+            annotations.append(data[:-1])
+            letters.append(data[-1])
+    annotations = [float(x) for x in annotations]
+    return annotations, letters
 
-    all_boxes[class][image] = [] or np.array of shape #dets x 5
-    """
-    raise NotImplementedError
+  def selective_search_roidb(self):
 
-                       
+    raise NameError("unimplemented")
+
+if __name__ == '__main__':
+  
+  d = icpr('icpr')
+
+  from IPython import emded;
+  emded()
